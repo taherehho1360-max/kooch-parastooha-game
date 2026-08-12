@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>بازی کوچ پرستوها</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Tahoma,Arial,sans-serif;overflow:hidden;background:#9ddfff}
+#game{position:relative;width:100vw;height:100vh;max-width:900px;margin:auto;overflow:hidden;background:linear-gradient(#70cdf7 0 72%,#8bd36d 72%)}
+.cloud{position:absolute;background:#fff;border-radius:50px;width:130px;height:38px;opacity:.8}
+.cloud:before,.cloud:after{content:"";position:absolute;background:#fff;border-radius:50%}
+.cloud:before{width:58px;height:58px;right:22px;top:-28px}.cloud:after{width:45px;height:45px;right:65px;top:-17px}
+#c1{top:16%;left:-140px;animation:move 24s linear infinite}#c2{top:34%;left:-180px;animation:move 31s linear 6s infinite}
+@keyframes move{to{left:110%}}
+#hud{position:absolute;top:12px;right:12px;left:12px;display:flex;justify-content:space-between;z-index:5}
+.badge{background:#ffffffe8;border-radius:18px;padding:8px 14px;font-weight:bold}
+#bird{position:absolute;width:76px;height:54px;z-index:4;left:12%;top:52%}
+.bird-body{position:absolute;width:46px;height:32px;background:#263746;border-radius:55%;left:15px;top:13px}
+.bird-body:after{content:"";position:absolute;right:-12px;top:7px;border-style:solid;border-width:7px 0 7px 18px;border-color:transparent transparent transparent #f3b44a}
+.wing{position:absolute;width:38px;height:20px;background:#405566;border-radius:100% 10% 100% 10%;left:5px;top:4px;transform:rotate(-25deg);animation:flap .25s infinite alternate}
+@keyframes flap{to{transform:rotate(18deg) translateY(4px)}}
+.eye{position:absolute;width:6px;height:6px;background:#fff;border-radius:50%;right:17px;top:19px;z-index:2}
+.star{position:absolute;font-size:32px;z-index:3;animation:twinkle .7s infinite alternate}
+@keyframes twinkle{to{transform:scale(1.18)}}
+.nest{position:absolute;right:7%;bottom:10%;font-size:78px;z-index:3}
+.tree{position:absolute;bottom:0;width:130px;height:220px;background:#8a5b38;border-radius:60px 60px 0 0;right:3%;z-index:1}
+.leaves{position:absolute;width:220px;height:150px;background:#45a94d;border-radius:50%;right:-45px;top:-70px;box-shadow:-65px 20px #56b955,20px 25px #399b47}
+#controls{position:absolute;bottom:18px;left:18px;z-index:6;display:grid;grid-template-columns:60px 60px 60px;grid-template-rows:55px 55px;gap:7px}
+.ctrl{width:60px;height:55px;border:2px solid #fff;border-radius:17px;background:#ffffffdd;font-size:25px;color:#24516b}
+.up{grid-column:2}.left{grid-column:1;grid-row:2}.down{grid-column:2;grid-row:2}.right{grid-column:3;grid-row:2}
+#message{position:absolute;inset:0;background:#0005;display:flex;align-items:center;justify-content:center;z-index:10;padding:20px}
+.card{background:#fff;border-radius:28px;padding:28px 24px;text-align:center;max-width:520px;width:100%;box-shadow:0 15px 50px #17445c55}
+h1{margin:0 0 12px;color:#1976a8}p{line-height:2}
+button.start{border:0;border-radius:18px;background:#ff9f43;color:white;font-size:19px;font-weight:bold;padding:13px 25px}
+#hint{position:absolute;bottom:18px;right:18px;z-index:6;background:#ffffffcc;border-radius:16px;padding:8px 12px;font-size:13px}
+@media(max-width:600px){.nest{font-size:62px}.tree{width:100px;height:180px}.leaves{width:180px;height:125px}#hint{display:none}}
+</style>
+</head>
+<body>
+<div id="game">
+<div class="cloud" id="c1"></div><div class="cloud" id="c2"></div>
+<div id="hud"><div class="badge">⭐ امتیاز: <span id="score">0</span></div><div class="badge">🐦 کوچ پرستوها</div></div>
+<div class="tree"><div class="leaves"></div></div><div class="nest">🪹</div>
+<div id="bird"><div class="wing"></div><div class="bird-body"></div><div class="eye"></div></div>
+<div id="controls">
+<button class="ctrl up" data-dy="-1">▲</button><button class="ctrl left" data-dx="-1">◀</button>
+<button class="ctrl down" data-dy="1">▼</button><button class="ctrl right" data-dx="1">▶</button>
+</div><div id="hint">پرستو را با دکمه‌ها به لانه برسان!</div>
+<div id="message"><div class="card"><h1>🐦 بازی کوچ پرستوها</h1>
+<p>پرستو کوچولو باید از آسمان عبور کند و به لانه برسد.<br>ستاره‌ها را جمع کن تا امتیاز بگیری!</p>
+<button class="start" id="start">شروع بازی</button></div></div>
+</div>
+<script>
+const bird=document.getElementById('bird'),msg=document.getElementById('message'),scoreEl=document.getElementById('score');
+let x=12,y=52,score=0,playing=false,stars=[];
+function setBird(){x=Math.max(2,Math.min(82,x));y=Math.max(13,Math.min(66,y));bird.style.left=x+'%';bird.style.top=y+'%'}
+function near(a,b){let A=a.getBoundingClientRect(),B=b.getBoundingClientRect();return Math.hypot(A.left+A.width/2-B.left-B.width/2,A.top+A.height/2-B.top-B.height/2)<48}
+function spawn(){stars.forEach(s=>s.remove());stars=[];for(let i=0;i<7;i++){let s=document.createElement('div');s.className='star';s.textContent='⭐';s.style.left=(10+Math.random()*72)+'%';s.style.top=(18+Math.random()*48)+'%';document.getElementById('game').appendChild(s);stars.push(s)}}
+function move(dx,dy){if(!playing)return;x+=dx*2.2;y+=dy*2.2;setBird();stars=stars.filter(s=>{if(near(bird,s)){s.remove();score++;scoreEl.textContent=score;return false}return true});if(near(bird,document.querySelector('.nest'))){playing=false;msg.innerHTML='<div class="card"><h1>🎉 آفرین!</h1><p>پرستو به لانه رسید.</p><p>امتیاز شما: <b>'+score+'</b> ⭐</p><button class="start" onclick="restart()">دوباره بازی کن</button></div>';msg.style.display='flex'}}
+function restart(){score=0;scoreEl.textContent=0;x=12;y=52;setBird();spawn();msg.style.display='none';playing=true}
+document.getElementById('start').onclick=restart;
+document.querySelectorAll('.ctrl').forEach(b=>b.addEventListener('pointerdown',e=>{e.preventDefault();move(+(b.dataset.dx||0),+(b.dataset.dy||0))}));
+document.addEventListener('keydown',e=>{if(e.key==='ArrowUp')move(0,-1);if(e.key==='ArrowDown')move(0,1);if(e.key==='ArrowLeft')move(-1,0);if(e.key==='ArrowRight')move(1,0)});
+setBird();
+</script>
+</body>
+</html>
