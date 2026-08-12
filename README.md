@@ -1,1 +1,0 @@
-# kooch-parastooha-game
